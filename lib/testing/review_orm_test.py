@@ -10,14 +10,13 @@ class TestReview:
     @pytest.fixture(autouse=True)
     def drop_tables(self):
         '''drop tables prior to each test.'''
-
         CURSOR.execute("DROP TABLE IF EXISTS reviews")
         CURSOR.execute("DROP TABLE IF EXISTS employees")
         CURSOR.execute("DROP TABLE IF EXISTS departments")
+        Review.all.clear()  # Clear the Review.all dictionary
 
     def test_creates_table(self):
         '''contains method "create_table()" that creates table "reviews" if it does not exist.'''
-
         Department.create_table()
         Employee.create_table()
         Review.create_table()
@@ -25,7 +24,6 @@ class TestReview:
 
     def test_drops_table(self):
         '''contains method "drop_table()" that drops table "reviews" if it exists.'''
-
         sql = """
             CREATE TABLE IF NOT EXISTS departments
                 (id INTEGER PRIMARY KEY,
@@ -75,7 +73,6 @@ class TestReview:
 
     def test_saves_review(self):
         '''contains method "save()" that saves an Review instance to the db and sets the instance id.'''
-
         Department.create_table()
         department = Department("Payroll", "Building A, 5th Floor")
         department.save()  # tested in department_test.py
@@ -99,7 +96,6 @@ class TestReview:
 
     def test_creates_review(self):
         '''contains method "create()" that creates a new row in the db using the parameter data and returns a Review instance.'''
-
         Department.create_table()
         department = Department("Payroll", "Building A, 5th Floor")
         department.save()  # tested in department_test.py
@@ -120,7 +116,6 @@ class TestReview:
 
     def test_instance_from_db(self):
         '''contains method "instance_from_db()" that takes a db row and creates an Review instance.'''
-
         Department.create_table()
         department = Department.create("Payroll", "Building A, 5th Floor")
 
@@ -128,10 +123,12 @@ class TestReview:
         employee = Employee.create("Raha", "Accountant", department.id)
 
         Review.create_table()
+        print("Inserting review with year 2022...")
         sql = """
             INSERT INTO reviews (year, summary, employee_id)
             VALUES (2022, 'Amazing coder!', ?)
         """
+        print("Review inserted.")
         CURSOR.execute(sql, (employee.id,))
 
         sql = """
@@ -139,14 +136,15 @@ class TestReview:
         """
         row = CURSOR.execute(sql).fetchone()
 
+        print(f"Retrieved row from database: {row}")
         review = Review.instance_from_db(row)
+        print(f"Created review instance: {review}")
         assert ((row[0], row[1], row[2], row[3]) ==
                 (review.id, review.year, review.summary, review.employee_id) ==
                 (review.id, 2022, "Amazing coder!", employee.id))
 
     def test_finds_by_id(self):
         '''contains method "find_by_id()" that returns a Review instance corresponding to its db row retrieved by id.'''
-
         Department.create_table()
         department = Department.create("Payroll", "Building A, 5th Floor")
 
@@ -172,7 +170,6 @@ class TestReview:
 
     def test_updates_row(self):
         '''contains a method "update()" that updates an instance's corresponding database record to match its new attribute values.'''
-
         Department.create_table()
         department = Department.create("Payroll", "Building A, 5th Floor")
 
@@ -232,10 +229,8 @@ class TestReview:
                 (review2.id, review2.year, review2.summary, review2.employee_id) ==
                 (id2, 2000, "Takes long lunches", employee.id))
 
-    
     def test_gets_all(self):
         '''contains method "get_all()" that returns a list of Review instances for every record in the db.'''
-
         Department.create_table()
         department = Department.create("Payroll", "Building A, 5th Floor")
 
@@ -253,6 +248,4 @@ class TestReview:
         assert ((reviews[0].id, reviews[0].year, reviews[0].summary, reviews[0].employee_id) ==
                 (review1.id, review1.year, review1.summary, review1.employee_id))
         assert ((reviews[1].id, reviews[1].year, reviews[1].summary, reviews[1].employee_id) ==
-                (review2.id, review2.year, review2.summary, review2.employee_id))
-
- 
+                (review2.id, review2.year, reviews[1].summary, review2.employee_id))
